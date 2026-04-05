@@ -50,9 +50,10 @@ export const AddTransactionModal = ({ isOpen, onClose, defaultType = 'expense', 
     e.preventDefault();
     if (!amount || !category || !account) return; // Prevent empty submits
 
+    const parsedAmount = Math.abs(parseFloat(amount));
     const record = {
       type,
-      amount: parseFloat(amount),
+      amount: parsedAmount,
       date,
       category,
       account
@@ -105,7 +106,9 @@ export const AddTransactionModal = ({ isOpen, onClose, defaultType = 'expense', 
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
               <input 
-                type="number" 
+                type="number"
+                min="0"
+                step="0.01" 
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-black text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-slate-900 dark:text-white"
@@ -141,6 +144,9 @@ export const AddTransactionModal = ({ isOpen, onClose, defaultType = 'expense', 
                 {accounts.map(a => (
                   <option key={a.id} value={a.name}>{a.name}</option>
                 ))}
+                {initialData && initialData.account && !accounts.some(a => a.name === initialData.account) && (
+                  <option key="ghost-acc" value={initialData.account}>{initialData.account} (Deleted)</option>
+                )}
             </select>
             </div>
           </div>
@@ -158,9 +164,10 @@ export const AddTransactionModal = ({ isOpen, onClose, defaultType = 'expense', 
 
           <button 
             type="submit"
-            className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold tracking-wide py-3.5 rounded-xl transition-colors shadow-lg shadow-indigo-600/20"
+            disabled={accounts.length === 0}
+            className={`w-full mt-4 font-bold tracking-wide py-3.5 rounded-xl transition-all shadow-lg ${accounts.length === 0 ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none dark:bg-slate-800' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20'}`}
           >
-            {initialData ? 'Update Record' : 'Save Record To Ledger'}
+            {accounts.length === 0 ? 'Create an Account First' : (initialData ? 'Update Record' : 'Save Record To Ledger')}
           </button>
         </form>
       </div>

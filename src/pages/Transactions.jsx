@@ -130,9 +130,14 @@ export const Transactions = () => {
                     <div className={`shrink-0 inline-flex items-center justify-center p-3 rounded-xl shadow-sm ${t.type === 'income' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10' : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10'}`}>
                       {t.type === 'income' ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
                     </div>
-                    <div className="overflow-hidden mt-0.5">
+                    <div className="overflow-hidden mt-0.5 w-full">
                       <p className="font-bold text-slate-800 dark:text-slate-100 text-[15px] truncate">{t.category}</p>
-                      <p className="text-xs font-semibold text-slate-400 truncate mt-1">{t.note || t.source}</p>
+                      <div className="flex flex-col gap-0.5 mt-1">
+                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 truncate">
+                           {t.account || t.source}
+                        </span>
+                        {t.note && <span className="text-[11px] font-semibold text-slate-400 truncate">{t.note}</span>}
+                      </div>
                     </div>
                  </div>
                  <div className="text-right shrink-0">
@@ -177,6 +182,7 @@ export const Transactions = () => {
               <tr>
                 <th className="px-6 py-5 font-bold uppercase tracking-wider text-[11px]">Type</th>
                 <th className="px-6 py-5 font-bold uppercase tracking-wider text-[11px]">Category / Note</th>
+                <th className="px-6 py-5 font-bold uppercase tracking-wider text-[11px]">Source</th>
                 <th className="px-6 py-5 font-bold uppercase tracking-wider text-[11px]">Date</th>
                 <th className="px-6 py-5 font-bold uppercase tracking-wider text-[11px]">Amount</th>
                 {isAdmin && <th className="px-6 py-5 font-bold uppercase tracking-wider text-[11px] text-right">Actions</th>}
@@ -192,7 +198,12 @@ export const Transactions = () => {
                   </td>
                   <td className="px-6 py-5">
                     <p className="font-bold text-[15px] text-slate-800 dark:text-slate-100 mb-1">{t.category}</p>
-                    <p className="text-[13px] font-semibold text-slate-400">{t.note || t.source}</p>
+                    <p className="text-[13px] font-semibold text-slate-400">{t.note}</p>
+                  </td>
+                  <td className="px-6 py-5">
+                    <span className="text-[13px] font-semibold text-slate-600 dark:text-slate-300">
+                      {t.account || t.source}
+                    </span>
                   </td>
                   <td className="px-6 py-5 font-semibold text-[13px] text-slate-500 dark:text-slate-400">
                     {format(new Date(t.date), 'MMMM dd, yyyy')}
