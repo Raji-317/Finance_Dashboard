@@ -37,26 +37,26 @@ export const Sidebar = ({ isOpen, setIsOpen }) => {
           {/* Subtle background glow effect for premium feel */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
 
-          <div className="flex items-center gap-3 text-2xl font-bold mb-8 relative z-10">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 font-bold text-white shadow-md border border-indigo-400/30 text-sm">
+          <div className="flex items-center gap-3 text-2xl font-bold mb-8 relative z-10 overflow-hidden">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 font-bold text-white shadow-md border border-indigo-400/30 text-sm">
               F
             </div>
-            <span className="tracking-tight text-[19px]">FinDash</span>
+            <span className="tracking-tight text-[19px] truncate">FinDash</span>
           </div>
 
-          <div className="flex items-center gap-3.5 relative z-10 bg-[#1f2430] p-3 rounded-xl border border-[#3b445b] shadow-inner">
-            <div className="relative">
+          <div className="flex items-center gap-3.5 relative z-10 bg-[#1f2430] p-3 rounded-xl border border-[#3b445b] shadow-inner overflow-hidden">
+            <div className="relative shrink-0">
               <UserCircle className="h-11 w-11 text-slate-300 opacity-90" strokeWidth={1.5} />
               <div className="absolute bottom-0 right-0 bg-emerald-500 w-3 h-3 rounded-full border-2 border-[#1f2430]"></div>
             </div>
-            <div className="flex flex-col w-full">
-              <div className="flex justify-between items-center w-full">
-                 <p className="font-bold text-[14px] text-white tracking-wide">Rajya Lakshmi</p>
-                 <p className="text-[9px] font-bold bg-[#343a4e] text-[#60a5fa] px-1.5 py-0.5 rounded shadow-sm tracking-wider uppercase">{role}</p>
+            <div className="flex flex-col w-full overflow-hidden">
+              <div className="flex justify-between items-center w-full gap-2">
+                 <p className="font-bold text-[14px] text-white tracking-wide truncate">Rajya Lakshmi</p>
+                 <p className="text-[9px] font-bold bg-[#343a4e] text-[#60a5fa] px-1.5 py-0.5 rounded shadow-sm tracking-wider uppercase shrink-0">{role}</p>
               </div>
-              <p className="text-[13px] font-black text-emerald-400 mt-1 flex items-center leading-none">
+              <p className="text-[13px] font-black text-emerald-400 mt-1 flex items-center leading-none truncate">
                  ₹{totals.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                 <span className="text-[10px] font-medium text-slate-400 ml-1.5 align-baseline font-mono uppercase">Total Funds</span>
+                 <span className="hidden xl:inline-block text-[10px] font-medium text-slate-400 ml-1.5 align-baseline font-mono uppercase shrink-0">Total</span>
               </p>
             </div>
           </div>

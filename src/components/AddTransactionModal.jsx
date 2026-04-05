@@ -22,7 +22,12 @@ export const AddTransactionModal = ({ isOpen, onClose, defaultType = 'expense', 
       } else {
         setType(defaultType);
         setAmount('');
-        setDate(new Date().toISOString().split('T')[0]);
+        
+        // Exact Local Timezone Format
+        const tzDate = new Date();
+        const pad = (n) => n.toString().padStart(2, '0');
+        const localDateStr = `${tzDate.getFullYear()}-${pad(tzDate.getMonth()+1)}-${pad(tzDate.getDate())}`;
+        setDate(localDateStr);
         // Prefill generic category based on type
         const catOpts = categories.filter(c => c.type === defaultType);
         setCategory(catOpts.length > 0 ? catOpts[0].name : '');
@@ -103,7 +108,7 @@ export const AddTransactionModal = ({ isOpen, onClose, defaultType = 'expense', 
                 type="number" 
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-black text-lg"
+                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-black text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-slate-900 dark:text-white"
                 placeholder="0.00"
                 required
               />
@@ -116,7 +121,7 @@ export const AddTransactionModal = ({ isOpen, onClose, defaultType = 'expense', 
               <select 
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm font-medium"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm font-medium text-slate-900 dark:text-white"
                 required
               >
                 {currentCategoriesList.map(c => (
@@ -130,7 +135,7 @@ export const AddTransactionModal = ({ isOpen, onClose, defaultType = 'expense', 
               <select 
                 value={account}
                 onChange={(e) => setAccount(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm font-medium"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm font-medium text-slate-900 dark:text-white"
                 required
               >
                 {accounts.map(a => (
@@ -146,7 +151,7 @@ export const AddTransactionModal = ({ isOpen, onClose, defaultType = 'expense', 
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-sm"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-sm text-slate-900 dark:text-white"
               required
             />
           </div>

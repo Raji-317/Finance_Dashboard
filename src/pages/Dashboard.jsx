@@ -98,53 +98,53 @@ export const Dashboard = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         
         {/* LEFT COLUMN: PIE CHART / OVERVIEW MODULE */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] h-full flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] flex flex-col justify-start">
            
-           <div className="flex flex-wrap justify-between items-center mb-10 gap-4">
+           <div className="flex flex-col sm:flex-row justify-between items-start mb-6 sm:mb-10 gap-4">
               <h2 className={`text-xl font-bold ${baseThemeText}`}>
                 {activeTab === 'expense' ? 'Expenses Breakdown' : 'Income Breakdown'}
               </h2>
               
-              <div className="flex items-center gap-3">
-                 <div className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 focus-within:ring-2 ring-indigo-500/20">
-                    <Calendar className="h-4 w-4 text-slate-400" />
-                    <select 
-                      value={timeframe} 
-                      onChange={(e) => setTimeframe(e.target.value)}
-                      className="text-sm font-semibold text-slate-500 outline-none cursor-pointer bg-transparent"
-                    >
-                      <option value="weekly">Weekly</option>
-                      <option value="monthly">Monthly</option>
-                      <option value="yearly">Yearly</option>
-                      <option value="custom">Custom</option>
-                    </select>
+              <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
+                 <div className="flex items-center gap-3 w-full justify-between sm:justify-start">
+                    <div className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 focus-within:ring-2 ring-indigo-500/20">
+                       <Calendar className="h-4 w-4 text-slate-400" />
+                       <select 
+                         value={timeframe} 
+                         onChange={(e) => setTimeframe(e.target.value)}
+                         className="text-sm font-semibold text-slate-500 outline-none cursor-pointer bg-transparent"
+                       >
+                         <option value="weekly">Weekly</option>
+                         <option value="monthly">Monthly</option>
+                         <option value="yearly">Yearly</option>
+                         <option value="custom">Custom</option>
+                       </select>
+                    </div>
+                    
+                    {isAdmin && (
+                      <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className={`w-9 h-9 flex items-center justify-center rounded-full text-white shadow-sm transition-transform active:scale-95 ${baseThemeBg} shrink-0`}
+                      >
+                        <Plus className="h-5 w-5" />
+                      </button>
+                    )}
                  </div>
-                 
-                 {isAdmin && (
-                   <button 
-                     onClick={() => setIsModalOpen(true)}
-                     className={`w-9 h-9 flex items-center justify-center rounded-full text-white shadow-sm transition-transform active:scale-95 ${baseThemeBg}`}
-                   >
-                     <Plus className="h-5 w-5" />
-                   </button>
+
+                 {timeframe === 'custom' && (
+                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-sm mt-1 sm:mt-1.5 w-full sm:w-auto overflow-hidden">
+                      <input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="bg-transparent text-xs font-semibold outline-none text-slate-900 dark:text-white" />
+                      <span className="text-slate-400 font-black shrink-0">-</span>
+                      <input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="bg-transparent text-xs font-semibold outline-none text-slate-900 dark:text-white" />
+                    </div>
                  )}
               </div>
            </div>
 
-           {timeframe === 'custom' && (
-              <div className="flex justify-end mb-6">
-                 <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 shadow-sm">
-                   <input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="bg-transparent text-xs font-semibold outline-none text-slate-600 dark:text-slate-300" />
-                   <span className="text-slate-400 font-black">-</span>
-                   <input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="bg-transparent text-xs font-semibold outline-none text-slate-600 dark:text-slate-300" />
-                 </div>
-              </div>
-           )}
-
-           <div className="flex-1 w-full relative min-h-[240px] flex items-center justify-center">
+           <div className="w-full relative min-h-[240px] flex items-center justify-center">
              {chartData.data.length > 0 ? (
                <ResponsiveContainer width="100%" height={240}>
                  {/* Converted cleanly to strict Donut formatting scaling specific innerRadius limits matching screenshot */}
@@ -187,7 +187,7 @@ export const Dashboard = () => {
         </div>
 
         {/* RIGHT COLUMN: RECENT TRANSACTIONS TRACKER */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] h-full overflow-hidden flex flex-col">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] overflow-hidden flex flex-col">
            <div className="p-6 border-b border-slate-100 dark:border-slate-800">
               <h2 className={`text-xl font-bold ${baseThemeText}`}>
                  Recent {activeTab === 'expense' ? 'Expenses' : 'Income'}

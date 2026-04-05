@@ -68,8 +68,29 @@ export const FinanceProvider = ({ children }) => {
   const deleteTransaction = (id) => { setTransactions(prev => prev.filter(t => t.id !== id)); };
   const editTransaction = (updated) => { setTransactions(prev => prev.map(t => t.id === updated.id ? updated : t)); };
 
-  const addAccount = (account) => { setAccounts(prev => [...prev, { ...account, id: Date.now().toString(), date: new Date().toISOString().split('T')[0] }]); };
-  const editAccount = (updated) => { setAccounts(prev => prev.map(a => a.id === updated.id ? { ...updated, date: new Date().toISOString().split('T')[0] } : a)); };
+  const addAccount = (account) => { 
+    setAccounts(prev => {
+       const existingIndex = prev.findIndex(a => a.name.toLowerCase() === account.name.toLowerCase());
+       if (existingIndex >= 0) {
+          const updated = [...prev];
+          updated[existingIndex] = {
+             ...updated[existingIndex],
+             initialAmount: Number(updated[existingIndex].initialAmount) + Number(account.initialAmount)
+          };
+          return updated;
+       }
+       return [...prev, { ...account, id: Date.now().toString(), date: new Date().toISOString().split('T')[0] }];
+    });
+  };
+  const editAccount = (updated) => { 
+    setAccounts(prev => {
+       const oldAccName = prev.find(a => a.id === updated.id)?.name;
+       if (oldAccName && oldAccName !== updated.name) {
+          setTransactions(prevTx => prevTx.map(t => (t.account === oldAccName || t.source === oldAccName) ? {...t, account: updated.name, source: updated.name} : t));
+       }
+       return prev.map(a => a.id === updated.id ? { ...updated, date: new Date().toISOString().split('T')[0] } : a);
+    }); 
+  };
   const deleteAccount = (id) => { setAccounts(prev => prev.filter(a => a.id !== id)); };
 
   const addCategory = (category) => { setCategories(prev => [...prev, { ...category, id: Date.now().toString() }]); };
@@ -119,9 +140,28 @@ export const FinanceProvider = ({ children }) => {
     { balance: 0 }
   );
 
+  // Synthesize Account Initial Balances into Virtual Transactions so all graphs natively parse starting liquidities
+  const virtualTransactions = React.useMemo(() => {
+     const initTxs = accounts.map(acc => {
+        const isCredit = acc.type === 'Credit Card' || acc.type === 'Credit';
+        return {
+           id: `init-${acc.id}`,
+           type: isCredit ? 'expense' : 'income',
+           category: acc.name, // Maps explicitly to display account name on chart legend
+           amount: Number(acc.initialAmount),
+           date: acc.date || new Date().toISOString().split('T')[0],
+           account: acc.name,
+           isVirtual: true
+        };
+     }).filter(t => t.amount > 0);
+     
+     return [...transactions, ...initTxs];
+  }, [transactions, accounts]);
+
   return (
     <FinanceContext.Provider value={{ 
-      transactions, addTransaction, deleteTransaction, editTransaction, 
+      transactions: virtualTransactions, 
+      addTransaction, deleteTransaction, editTransaction, 
       accounts: dynamicAccounts, addAccount, editAccount, deleteAccount, 
       categories, addCategory, totals 
     }}>

@@ -177,8 +177,9 @@ export const Charts = () => {
                     axisLine={false} 
                     tickLine={false} 
                     tick={{fill: '#94a3b8', fontSize: 13, fontWeight: 500}} 
-                    tickFormatter={(val) => `₹${val}`} 
+                    tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : val >= 1000 ? `₹${(val / 1000).toFixed(0)}k` : `₹${val}`} 
                     dx={-10}
+                    width={60}
                   />
                   
                   <RechartsTooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc'}} />

@@ -26,7 +26,7 @@ export const Accounts = () => {
     e.stopPropagation();
     setEditingAcc(acc);
     setNewAccountName(acc.name);
-    setNewAccountAmount(acc.initialAmount);
+    setNewAccountAmount(acc.currentBalance ?? acc.initialAmount);
     setNewAccountType(acc.type || 'Checking');
     setIsModalOpen(true);
   };
@@ -38,11 +38,17 @@ export const Accounts = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (newAccountName && newAccountAmount) {
+    if (newAccountName && newAccountAmount !== '') {
+      const enteredValue = parseFloat(newAccountAmount);
       if (editingAcc) {
-         editAccount({ ...editingAcc, name: newAccountName, initialAmount: parseFloat(newAccountAmount), type: newAccountType });
+         let newInitialAmount = enteredValue;
+         if (editingAcc.currentBalance !== undefined) {
+            const diff = enteredValue - editingAcc.currentBalance;
+            newInitialAmount = Number(editingAcc.initialAmount) + diff;
+         }
+         editAccount({ ...editingAcc, name: newAccountName, initialAmount: newInitialAmount, type: newAccountType });
       } else {
-         addAccount({ name: newAccountName, initialAmount: parseFloat(newAccountAmount), type: newAccountType });
+         addAccount({ name: newAccountName, initialAmount: enteredValue, type: newAccountType });
       }
       setIsModalOpen(false);
     }
@@ -85,31 +91,31 @@ export const Accounts = () => {
           <div key={acc.id} className={`bg-white dark:bg-slate-900 rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 border-t-[3px] ${theme.border} dark:border-slate-800 dark:${theme.border} relative flex flex-col p-5`}>
             
             {/* Header Content */}
-            <div className="flex justify-between items-start mb-6">
-               <div className="flex items-start gap-3">
-                 <Building2 className={`h-6 w-6 mt-1 ${theme.light} opacity-90`} />
-                 <div>
-                    <h3 className="font-bold text-[15px] text-slate-800 dark:text-slate-100">{acc.name}</h3>
-                    <p className={`text-xs font-semibold ${theme.light} mt-1`}>{acc.type || 'Checking'}</p>
+            <div className="flex justify-between items-start mb-6 gap-2">
+               <div className="flex items-start gap-3 overflow-hidden">
+                 <Building2 className={`h-6 w-6 mt-1 shrink-0 ${theme.light} opacity-90`} />
+                 <div className="overflow-hidden">
+                    <h3 className="font-bold text-[15px] text-slate-800 dark:text-slate-100 truncate">{acc.name}</h3>
+                    <p className={`text-xs font-semibold ${theme.light} mt-1 truncate`}>{acc.type || 'Checking'}</p>
                  </div>
                </div>
 
                {isAdmin && (
-                 <div className="flex items-center gap-3">
-                   <button onClick={(e) => openEdit(acc, e)} className="text-slate-400 hover:text-blue-500 transition-colors">
-                     <Edit2 className="h-4 w-4" />
+                 <div className="flex items-center gap-3 shrink-0">
+                   <button onClick={(e) => openEdit(acc, e)} className="text-slate-400 hover:text-blue-500 transition-colors shrink-0">
+                     <Edit2 className="h-4 w-4 shrink-0" />
                    </button>
-                   <button onClick={(e) => handleDelete(acc.id, e)} className="text-slate-400 hover:text-red-500 transition-colors">
-                     <Trash2 className="h-4 w-4" />
+                   <button onClick={(e) => handleDelete(acc.id, e)} className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
+                     <Trash2 className="h-4 w-4 shrink-0" />
                    </button>
                  </div>
                )}
             </div>
 
             {/* Body Balances */}
-            <div>
+            <div className="overflow-hidden">
                <p className="text-xs text-slate-400 font-medium mb-1">Current Balance</p>
-               <p className={`text-2xl font-black ${theme.text}`}>
+               <p className={`text-2xl font-black ${theme.text} truncate`}>
                  {acc.type === 'Credit Card' || acc.type === 'Credit' ? (acc.currentBalance > 0 ? '-' : '+') : (acc.currentBalance < 0 ? '-' : '+')}₹{Math.abs(acc.currentBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}
                </p>
             </div>
@@ -134,11 +140,11 @@ export const Accounts = () => {
              <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Name</label>
-                  <input type="text" required value={newAccountName} onChange={e => setNewAccountName(e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded outline-none" />
+                  <input type="text" required value={newAccountName} onChange={e => setNewAccountName(e.target.value)} className="w-full px-4 py-2 border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 rounded outline-none text-slate-900 dark:text-white" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Type</label>
-                  <select value={newAccountType} onChange={e => setNewAccountType(e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded outline-none text-slate-900 font-medium">
+                  <select value={newAccountType} onChange={e => setNewAccountType(e.target.value)} className="w-full px-4 py-2 border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 rounded outline-none font-medium text-slate-900 dark:text-white">
                      <option value="Bank Account">Bank Account</option>
                      <option value="Savings">Savings</option>
                      <option value="Credit Card">Credit Card</option>
@@ -147,7 +153,7 @@ export const Accounts = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Balance</label>
-                  <input type="number" required value={newAccountAmount} onChange={e => setNewAccountAmount(e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded outline-none" />
+                  <input type="number" required value={newAccountAmount} onChange={e => setNewAccountAmount(e.target.value)} className="w-full px-4 py-2 border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 rounded outline-none text-slate-900 dark:text-white" />
                 </div>
                 <button type="submit" className="w-full mt-6 bg-[#3b82f6] hover:bg-blue-600 text-white font-bold py-2 rounded shadow-sm">{editingAcc ? 'Save' : 'Add'}</button>
              </form>
