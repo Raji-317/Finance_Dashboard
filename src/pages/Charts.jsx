@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Calendar } from 'lucide-react';
 import { parseISO, format, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 
 export const Charts = () => {
-  const { transactions } = useFinance();
+  const { transactions, accounts } = useFinance();
   const [chartView, setChartView] = useState('general');
   const [timeframe, setTimeframe] = useState('monthly');
+  const [trendAccount, setTrendAccount] = useState('all');
   
   // Custom month pickers for bounds
   const [startMonthStr, setStartMonthStr] = useState(() => {
@@ -61,10 +62,47 @@ export const Charts = () => {
        if (t.type === 'expense') dataMap[key].expense += Number(t.amount);
     });
 
-    return Object.values(dataMap).sort((a,b) => a.numericDate - b.numericDate).map(item => ({
+    const sortedMap = Object.values(dataMap).sort((a,b) => a.numericDate - b.numericDate);
+    
+    return sortedMap.map(item => ({
        name: item.name, income: item.income, expense: item.expense
     }));
   }, [filteredTransactions, timeframe]);
+
+  const trendData = useMemo(() => {
+    const dataMap = {};
+    
+    filteredTransactions.forEach(t => {
+       if (trendAccount !== 'all' && t.account !== trendAccount && t.source !== trendAccount) return;
+
+       const tDate = parseISO(t.date);
+       const key = timeframe === 'yearly' ? format(tDate, 'yyyy') : format(tDate, 'MMM yy'); 
+       
+       if (!dataMap[key]) {
+         dataMap[key] = { 
+            name: key, 
+            income: 0, 
+            expense: 0, 
+            numericDate: timeframe === 'yearly' ? tDate.getFullYear() : new Date(tDate.getFullYear(), tDate.getMonth(), 1).getTime() 
+         };
+       }
+       
+       if (t.type === 'income') dataMap[key].income += Number(t.amount);
+       if (t.type === 'expense') dataMap[key].expense += Number(t.amount);
+    });
+
+    const sortedMap = Object.values(dataMap).sort((a,b) => a.numericDate - b.numericDate);
+    
+    let runningAccumulator = 0;
+    return sortedMap.map(item => {
+       const net = item.income - item.expense;
+       runningAccumulator += net;
+       return {
+          name: item.name, 
+          balance: runningAccumulator
+       };
+    });
+  }, [filteredTransactions, timeframe, trendAccount]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -72,9 +110,9 @@ export const Charts = () => {
         <div className="bg-white p-3 rounded shadow-md border border-slate-100 text-sm font-semibold text-slate-700">
           <p className="mb-2 text-slate-500">{label}</p>
           {payload.map((entry, index) => (
-            <p key={index} style={{ color: entry.color }} className="flex justify-between gap-6">
+            <p key={index} style={{ color: entry.color }} className="flex justify-between gap-6 mt-1">
               <span className="capitalize">{entry.name}</span>
-              <span>₹{entry.value.toLocaleString('en-IN')}</span>
+              <span>{entry.name.toLowerCase() === 'balance' ? '' : '₹'}{entry.value >= 0 && entry.name.toLowerCase() === 'balance' ? '+' : ''}{entry.name.toLowerCase() === 'balance' && entry.value < 0 ? '-₹' : entry.name.toLowerCase() === 'balance' && entry.value >= 0 ? '₹' : ''}{Math.abs(entry.value).toLocaleString('en-IN')}</span>
             </p>
           ))}
         </div>
@@ -199,6 +237,74 @@ export const Charts = () => {
                   )}
 
                </BarChart>
+            </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center text-slate-400 font-medium">
+                No activity mapped spanning these parameters.
+              </div>
+            )}
+         </div>
+      </div>
+      <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 p-6 h-[500px] flex flex-col mt-6">
+         
+         <div className="mb-6 flex justify-between items-center">
+             <h3 className="font-bold text-slate-700 text-[16px]">
+               Balance Trend Visualization
+             </h3>
+             <select 
+                value={trendAccount} 
+                onChange={(e) => setTrendAccount(e.target.value)}
+                className="text-sm font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 outline-none cursor-pointer focus:ring-2 ring-purple-500/20"
+             >
+                <option value="all">All Accounts</option>
+                {accounts?.map(acc => (
+                   <option key={acc.id} value={acc.name}>{acc.name}</option>
+                ))}
+             </select>
+         </div>
+         
+         <div className="flex-1 w-full relative">
+            {trendData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+               <LineChart data={trendData} margin={{ top: 20, right: 0, left: -20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.6}/>
+                  
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#94a3b8', fontSize: 13, fontWeight: 500}} 
+                    dy={12} 
+                  />
+                  
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#94a3b8', fontSize: 13, fontWeight: 500}} 
+                    tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : val >= 1000 ? `₹${(val / 1000).toFixed(0)}k` : val <= -1000 ? `-₹${(Math.abs(val) / 1000).toFixed(0)}k` : `₹${val}`} 
+                    dx={-10}
+                    width={65}
+                  />
+                  
+                  <RechartsTooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', stroke: '#e2e8f0', strokeWidth: 1}} />
+                  <Legend 
+                     verticalAlign="bottom" 
+                     height={20}
+                     wrapperStyle={{ bottom: -10 }}
+                     iconType="circle"
+                     formatter={(value) => <span style={{ color: '#475569', fontSize: 13, fontWeight: 500, marginLeft: 4, textTransform: 'capitalize'}}>{value}</span>}
+                  />
+
+                  <Line 
+                    type="monotone" 
+                    dataKey="balance" 
+                    name="Balance Trend" 
+                    stroke="#8b5cf6" 
+                    strokeWidth={4} 
+                    dot={{ r: 4, fill: "#8b5cf6", strokeWidth: 2, stroke: "#fff" }} 
+                    activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} 
+                  />
+               </LineChart>
             </ResponsiveContainer>
             ) : (
               <div className="flex h-full items-center justify-center text-slate-400 font-medium">

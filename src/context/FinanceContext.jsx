@@ -137,8 +137,13 @@ export const FinanceProvider = ({ children }) => {
       }
       return acc;
     },
-    { balance: 0 }
+    { balance: 0, income: 0, expense: 0 }
   );
+
+  transactions.forEach(t => {
+    if (t.type === 'income') totals.income += Number(t.amount);
+    if (t.type === 'expense') totals.expense += Number(t.amount);
+  });
 
   // Synthesize Account Initial Balances into Virtual Transactions so all graphs natively parse starting liquidities
   const virtualTransactions = React.useMemo(() => {

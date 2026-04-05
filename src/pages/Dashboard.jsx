@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { AddTransactionModal } from '../components/AddTransactionModal';
 import { format, parseISO, isSameWeek, isSameMonth, isSameYear, isWithinInterval } from 'date-fns';
 
 export const Dashboard = () => {
-  const { transactions } = useFinance();
+  const { transactions, totals } = useFinance();
   const { isAdmin } = useAuth();
   
   const [activeTab, setActiveTab] = useState('expense');
@@ -40,6 +40,36 @@ export const Dashboard = () => {
       return false;
     }).sort((a,b) => new Date(b.date) - new Date(a.date));
   }, [transactions, activeTab, timeframe, customStart, customEnd]);
+
+  const timeframeTotals = useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    
+    transactions.forEach(t => {
+      const d = parseISO(t.date);
+      const now = new Date();
+      let withinTimeframe = false;
+
+      if (timeframe === 'weekly') withinTimeframe = isSameWeek(d, now, { weekStartsOn: 1 });
+      else if (timeframe === 'monthly') withinTimeframe = isSameMonth(d, now);
+      else if (timeframe === 'yearly') withinTimeframe = isSameYear(d, now);
+      else if (timeframe === 'custom' && customStart && customEnd) {
+        try {
+           const start = new Date(customStart);
+           const end = new Date(customEnd);
+           end.setHours(23, 59, 59, 999);
+           withinTimeframe = isWithinInterval(d, { start, end });
+        } catch { withinTimeframe = false; }
+      }
+
+      if (withinTimeframe) {
+         if (t.type === 'income') income += Number(t.amount);
+         if (t.type === 'expense') expense += Number(t.amount);
+      }
+    });
+    
+    return { income, expense };
+  }, [transactions, timeframe, customStart, customEnd]);
 
   const chartData = useMemo(() => {
     const dataMap = {};
@@ -82,6 +112,39 @@ export const Dashboard = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
       
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0">
+            <Wallet className="h-6 w-6 text-blue-500" />
+          </div>
+          <div className="overflow-hidden">
+            <p className="text-sm font-semibold text-slate-500">Total Balance</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white truncate">₹{totals.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0">
+            <TrendingUp className="h-6 w-6 text-emerald-500" />
+          </div>
+          <div className="overflow-hidden">
+            <p className="text-sm font-semibold text-slate-500">Total Income</p>
+            <p className="text-2xl font-black text-emerald-500 truncate">+₹{timeframeTotals.income.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[#f97316]/10 dark:bg-[#f97316]/10 flex items-center justify-center shrink-0">
+            <TrendingDown className="h-6 w-6 text-[#f97316]" />
+          </div>
+          <div className="overflow-hidden">
+            <p className="text-sm font-semibold text-slate-500">Total Expense</p>
+            <p className="text-2xl font-black text-[#f97316] truncate">-₹{timeframeTotals.expense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Top Toggle Switch Layout matching specifically to the upper-left separated block layout */}
       <div className="flex bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1.5 rounded-xl self-start w-fit shadow-sm">
         <button
@@ -127,9 +190,10 @@ export const Dashboard = () => {
                     {isAdmin && (
                       <button 
                         onClick={() => setIsModalOpen(true)}
-                        className={`w-9 h-9 flex items-center justify-center rounded-full text-white shadow-sm transition-transform active:scale-95 ${baseThemeBg} shrink-0`}
+                        className={`h-9 px-4 flex items-center justify-center rounded-full text-white shadow-sm transition-transform active:scale-95 ${baseThemeBg} shrink-0`}
                       >
-                        <Plus className="h-5 w-5" />
+                        <Plus className="h-4 w-4 sm:mr-1" />
+                        <span className="hidden sm:inline text-sm font-bold">Add</span>
                       </button>
                     )}
                  </div>

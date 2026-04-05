@@ -4,11 +4,12 @@ import { Building2, Plus, Edit2, Trash2, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const Accounts = () => {
-  const { accounts, addAccount, editAccount, deleteAccount, totals } = useFinance();
+  const { accounts, addAccount, editAccount, deleteAccount, totals, transactions } = useFinance();
   const { isAdmin } = useAuth();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAcc, setEditingAcc] = useState(null);
+  const [viewingAcc, setViewingAcc] = useState(null);
   
   const [newAccountName, setNewAccountName] = useState('');
   const [newAccountAmount, setNewAccountAmount] = useState('');
@@ -88,7 +89,7 @@ export const Accounts = () => {
         {accounts.map((acc, index) => {
           const theme = getThemeVars(acc.type, index);
           return (
-          <div key={acc.id} className={`bg-white dark:bg-slate-900 rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 border-t-[3px] ${theme.border} dark:border-slate-800 dark:${theme.border} relative flex flex-col p-5`}>
+          <div key={acc.id} onClick={() => setViewingAcc(acc)} className={`bg-white dark:bg-slate-900 rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 border-t-[3px] ${theme.border} dark:border-slate-800 dark:${theme.border} relative flex flex-col p-5 cursor-pointer hover:shadow-md transition-shadow`}>
             
             {/* Header Content */}
             <div className="flex justify-between items-start mb-6 gap-2">
@@ -159,6 +160,44 @@ export const Accounts = () => {
              </form>
           </div>
         </div>
+      )}
+
+      {/* Account Transactions Modal */}
+      {viewingAcc && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-2xl max-h-[80vh] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
+               <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">{viewingAcc.name}</h2>
+                    <p className="text-sm font-medium text-slate-500">Transaction History</p>
+                  </div>
+                  <button onClick={() => setViewingAcc(null)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0">
+                    <X className="h-5 w-5 text-slate-500" />
+                  </button>
+               </div>
+               <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                  {transactions.filter(t => !t.isVirtual && (t.account === viewingAcc.name || t.source === viewingAcc.name)).length > 0 ? (
+                     <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                        {transactions.filter(t => !t.isVirtual && (t.account === viewingAcc.name || t.source === viewingAcc.name)).sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t => (
+                           <div key={t.id} className="flex justify-between items-center py-3 px-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
+                              <div>
+                                 <p className="font-bold text-sm text-slate-800 dark:text-slate-200">{t.category}</p>
+                                 <p className="text-xs font-semibold text-slate-400">{t.date}</p>
+                              </div>
+                              <p className={`font-black text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-900 dark:text-slate-100'}`}>
+                                 {t.type === 'income' ? '+' : '-'}₹{Math.abs(Number(t.amount)).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                              </p>
+                           </div>
+                        ))}
+                     </div>
+                  ) : (
+                     <div className="flex items-center justify-center h-40 text-sm font-semibold text-slate-400">
+                        No transactions found for this account.
+                     </div>
+                  )}
+               </div>
+            </div>
+         </div>
       )}
     </div>
   );
