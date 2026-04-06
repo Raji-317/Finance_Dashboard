@@ -22,6 +22,7 @@ export const Dashboard = () => {
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
       if (t.type !== activeTab) return false;
+      if (t.category === 'Uncategorized') return false;
 
       const d = parseISO(t.date);
       const now = new Date();
@@ -76,6 +77,8 @@ export const Dashboard = () => {
     let totalValue = 0;
 
     filteredTransactions.forEach(t => {
+      if (t.category === 'Uncategorized') return;
+
       const cat = t.category || 'Other';
       if (!dataMap[cat]) dataMap[cat] = 0;
       dataMap[cat] += Number(t.amount);
@@ -120,7 +123,7 @@ export const Dashboard = () => {
           </div>
           <div className="overflow-hidden">
             <p className="text-sm font-semibold text-slate-500">Total Balance</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white truncate">₹{totals.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white truncate">₹{Math.abs(totals.balance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
           </div>
         </div>
 

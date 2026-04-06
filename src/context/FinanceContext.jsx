@@ -10,7 +10,7 @@ const generateMockData = () => {
   let data = [];
   
   // Seed extensive list of transactions
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 110; i++) {
      const isIncome = i % 4 === 0;
      const type = isIncome ? 'income' : 'expense';
      const categories = isIncome ? ['Salary', 'Freelance'] : ['Housing', 'Food', 'Transport', 'Entertainment'];
@@ -46,23 +46,23 @@ const defaultCategories = [
 
 export const FinanceProvider = ({ children }) => {
   const [transactions, setTransactions] = useState(() => {
-    const saved = localStorage.getItem("finance_transactions_v5");
+    const saved = localStorage.getItem("finance_transactions_v7");
     return saved ? JSON.parse(saved) : generateMockData();
   });
 
   const [accounts, setAccounts] = useState(() => {
-    const saved = localStorage.getItem("finance_accounts_v5");
+    const saved = localStorage.getItem("finance_accounts_v6");
     return saved ? JSON.parse(saved) : defaultAccounts;
   });
 
   const [categories, setCategories] = useState(() => {
-    const saved = localStorage.getItem("finance_categories_v5");
+    const saved = localStorage.getItem("finance_categories_v6");
     return saved ? JSON.parse(saved) : defaultCategories;
   });
 
-  useEffect(() => { localStorage.setItem("finance_transactions_v5", JSON.stringify(transactions)); }, [transactions]);
-  useEffect(() => { localStorage.setItem("finance_accounts_v5", JSON.stringify(accounts)); }, [accounts]);
-  useEffect(() => { localStorage.setItem("finance_categories_v5", JSON.stringify(categories)); }, [categories]);
+  useEffect(() => { localStorage.setItem("finance_transactions_v7", JSON.stringify(transactions)); }, [transactions]);
+  useEffect(() => { localStorage.setItem("finance_accounts_v6", JSON.stringify(accounts)); }, [accounts]);
+  useEffect(() => { localStorage.setItem("finance_categories_v6", JSON.stringify(categories)); }, [categories]);
 
   const addTransaction = (transaction) => { setTransactions(prev => [{ ...transaction, id: Date.now().toString() }, ...prev]); };
   const deleteTransaction = (id) => { setTransactions(prev => prev.filter(t => t.id !== id)); };
@@ -91,9 +91,39 @@ export const FinanceProvider = ({ children }) => {
        return prev.map(a => a.id === updated.id ? { ...updated, date: new Date().toISOString().split('T')[0] } : a);
     }); 
   };
-  const deleteAccount = (id) => { setAccounts(prev => prev.filter(a => a.id !== id)); };
+  const deleteAccount = (id) => { 
+    setAccounts(prev => {
+        const deletedAccount = prev.find(a => a.id === id);
+        if (deletedAccount) {
+            setTransactions(prevTx => prevTx.filter(t => t.account !== deletedAccount.name && t.source !== deletedAccount.name));
+        }
+        return prev.filter(a => a.id !== id);
+    }); 
+  };
 
-  const addCategory = (category) => { setCategories(prev => [...prev, { ...category, id: Date.now().toString() }]); };
+  const addCategory = (category) => { 
+    setCategories(prev => {
+        const existing = prev.find(c => c.type === category.type && c.name.toLowerCase() === category.name.toLowerCase());
+        if (existing) return prev;
+        return [...prev, { ...category, id: Date.now().toString() }];
+    }); 
+  };
+
+  const editCategory = (updated) => {
+    const oldCat = categories.find(c => c.id === updated.id);
+    if (oldCat && oldCat.name !== updated.name) {
+       setTransactions(prevTx => prevTx.map(t => (t.category === oldCat.name && t.type === oldCat.type) ? {...t, category: updated.name} : t));
+    }
+    setCategories(prev => prev.map(c => c.id === updated.id ? updated : c));
+  };
+
+  const deleteCategory = (id) => {
+    const catToDelete = categories.find(c => c.id === id);
+    if (catToDelete) {
+         setTransactions(prevTx => prevTx.map(t => (t.category === catToDelete.name && t.type === catToDelete.type) ? {...t, category: 'Uncategorized'} : t));
+    }
+    setCategories(prev => prev.filter(c => c.id !== id));
+  };
 
   // Calculate dynamic balances using transactions against indian banks natively
   const dynamicAccounts = accounts.map(acc => {
@@ -147,6 +177,12 @@ export const FinanceProvider = ({ children }) => {
 
   // Synthesize Account Initial Balances into Virtual Transactions so all graphs natively parse starting liquidities
   const virtualTransactions = React.useMemo(() => {
+     const activeAccountNames = new Set(accounts.map(a => a.name.toLowerCase()));
+     const validTxs = transactions.filter(t => 
+        (t.account && activeAccountNames.has(t.account.toLowerCase())) || 
+        (t.source && activeAccountNames.has(t.source.toLowerCase()))
+     );
+
      const initTxs = accounts.map(acc => {
         const isCredit = acc.type === 'Credit Card' || acc.type === 'Credit';
         return {
@@ -160,7 +196,7 @@ export const FinanceProvider = ({ children }) => {
         };
      }).filter(t => t.amount > 0);
      
-     return [...transactions, ...initTxs];
+     return [...validTxs, ...initTxs];
   }, [transactions, accounts]);
 
   return (
@@ -168,7 +204,7 @@ export const FinanceProvider = ({ children }) => {
       transactions: virtualTransactions, 
       addTransaction, deleteTransaction, editTransaction, 
       accounts: dynamicAccounts, addAccount, editAccount, deleteAccount, 
-      categories, addCategory, totals 
+      categories, addCategory, editCategory, deleteCategory, totals 
     }}>
       {children}
     </FinanceContext.Provider>

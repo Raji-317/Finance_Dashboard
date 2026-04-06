@@ -13,13 +13,13 @@ export const Accounts = () => {
   
   const [newAccountName, setNewAccountName] = useState('');
   const [newAccountAmount, setNewAccountAmount] = useState('');
-  const [newAccountType, setNewAccountType] = useState('Checking');
+  const [newAccountType, setNewAccountType] = useState('Bank Account');
 
   const openAdd = () => {
     setEditingAcc(null);
     setNewAccountName('');
     setNewAccountAmount('');
-    setNewAccountType('Checking');
+    setNewAccountType('Bank Account');
     setIsModalOpen(true);
   };
 
@@ -28,7 +28,7 @@ export const Accounts = () => {
     setEditingAcc(acc);
     setNewAccountName(acc.name);
     setNewAccountAmount(acc.currentBalance ?? acc.initialAmount);
-    setNewAccountType(acc.type || 'Checking');
+    setNewAccountType(acc.type || 'Bank Account');
     setIsModalOpen(true);
   };
 
@@ -57,9 +57,9 @@ export const Accounts = () => {
 
   // Helper accurately fetching border color and text color per account type matches Screenshot 1 perfectly
   const getThemeVars = (type, index) => {
-    if (type === 'Checking' || index === 0) return { border: 'border-t-blue-500', text: 'text-blue-500', light: 'text-blue-500' };
-    if (type === 'Savings' || index === 1) return { border: 'border-t-emerald-500', text: 'text-emerald-500', light: 'text-emerald-500' };
-    if (type === 'Credit' || index === 2 || index === 3) return { border: 'border-t-[#e25d48]', text: 'text-[#e25d48]', light: 'text-[#e25d48]' };
+    if (type === 'Bank Account' || type === 'Checking' || index === 0) return { border: 'border-t-blue-500', text: 'text-blue-500', light: 'text-blue-500' };
+    if (type === 'Savings' || type === 'Savings Account' || index === 1) return { border: 'border-t-emerald-500', text: 'text-emerald-500', light: 'text-emerald-500' };
+    if (type === 'Credit Card' || type === 'Credit' || index === 2 || index === 3) return { border: 'border-t-[#e25d48]', text: 'text-[#e25d48]', light: 'text-[#e25d48]' };
     return { border: 'border-t-slate-500', text: 'text-slate-700', light: 'text-slate-500' };
   };
   
@@ -97,7 +97,7 @@ export const Accounts = () => {
                  <Building2 className={`h-6 w-6 mt-1 shrink-0 ${theme.light} opacity-90`} />
                  <div className="overflow-hidden">
                     <h3 className="font-bold text-[15px] text-slate-800 dark:text-slate-100 truncate">{acc.name}</h3>
-                    <p className={`text-xs font-semibold ${theme.light} mt-1 truncate`}>{acc.type || 'Checking'}</p>
+                    <p className={`text-xs font-semibold ${theme.light} mt-1 truncate`}>{acc.type || 'Bank Account'}</p>
                  </div>
                </div>
 
@@ -146,8 +146,8 @@ export const Accounts = () => {
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Type</label>
                   <select value={newAccountType} onChange={e => setNewAccountType(e.target.value)} className="w-full px-4 py-2 border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 rounded outline-none font-medium text-slate-900 dark:text-white">
-                     <option value="Bank Account">Bank Account</option>
-                     <option value="Savings">Savings</option>
+                     <option value="Bank Account">Bank Account (Current)</option>
+                     <option value="Savings">Savings Account</option>
                      <option value="Credit Card">Credit Card</option>
                      <option value="Cash">Cash</option>
                   </select>

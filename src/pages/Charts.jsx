@@ -200,7 +200,7 @@ export const Charts = () => {
          <div className="flex-1 w-full relative">
             {processedData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={processedData} margin={{ top: 20, right: 0, left: -20, bottom: 20 }}>
+               <BarChart data={processedData} margin={{ top: 20, right: 0, left: 0, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.6}/>
                   
                   <XAxis 
@@ -215,9 +215,9 @@ export const Charts = () => {
                     axisLine={false} 
                     tickLine={false} 
                     tick={{fill: '#94a3b8', fontSize: 13, fontWeight: 500}} 
-                    tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : val >= 1000 ? `₹${(val / 1000).toFixed(0)}k` : `₹${val}`} 
+                    tickFormatter={(val) => val === 0 ? '₹0' : `₹${Math.abs(val).toLocaleString('en-IN')}`}
                     dx={-10}
-                    width={60}
+                    width={90}
                   />
                   
                   <RechartsTooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc'}} />
@@ -257,7 +257,8 @@ export const Charts = () => {
                 className="text-sm font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 outline-none cursor-pointer focus:ring-2 ring-purple-500/20"
              >
                 <option value="all">All Accounts</option>
-                {accounts?.map(acc => (
+                <option value="Cash">Cash</option>
+                {accounts?.filter(acc => acc.name.toLowerCase() !== 'cash').map(acc => (
                    <option key={acc.id} value={acc.name}>{acc.name}</option>
                 ))}
              </select>
@@ -266,7 +267,7 @@ export const Charts = () => {
          <div className="flex-1 w-full relative">
             {trendData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-               <LineChart data={trendData} margin={{ top: 20, right: 0, left: -20, bottom: 20 }}>
+               <LineChart data={trendData} margin={{ top: 20, right: 0, left: 0, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.6}/>
                   
                   <XAxis 
@@ -281,9 +282,9 @@ export const Charts = () => {
                     axisLine={false} 
                     tickLine={false} 
                     tick={{fill: '#94a3b8', fontSize: 13, fontWeight: 500}} 
-                    tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : val >= 1000 ? `₹${(val / 1000).toFixed(0)}k` : val <= -1000 ? `-₹${(Math.abs(val) / 1000).toFixed(0)}k` : `₹${val}`} 
+                    tickFormatter={(val) => val === 0 ? '₹0' : `₹${Math.abs(val).toLocaleString('en-IN')}`}
                     dx={-10}
-                    width={65}
+                    width={90}
                   />
                   
                   <RechartsTooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', stroke: '#e2e8f0', strokeWidth: 1}} />

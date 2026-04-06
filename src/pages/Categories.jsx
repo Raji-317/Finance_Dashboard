@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { ArrowLeft, X, Layers, Briefcase, ShoppingBag, Home, Zap, Film, Utensils, Heart } from 'lucide-react';
+import { ArrowLeft, X, Layers, Briefcase, ShoppingBag, Home, Zap, Film, Utensils, Heart, Trash2, Edit2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AddTransactionModal } from '../components/AddTransactionModal';
 import { format } from 'date-fns';
@@ -19,7 +19,7 @@ const iconMap = {
 };
 
 export const Categories = () => {
-  const { categories, transactions, addCategory, addTransaction, accounts } = useFinance();
+  const { categories, transactions, addCategory, editCategory, deleteCategory, addTransaction, accounts } = useFinance();
   const { isAdmin } = useAuth();
   
   const [activeTab, setActiveTab] = useState('expense');
@@ -27,9 +27,24 @@ export const Categories = () => {
   
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
   
-  // Create Category Setup
+  // Create/Edit Category Setup
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
   const [newCatName, setNewCatName] = useState('');
+  const [editingCat, setEditingCat] = useState(null);
+
+  const openAddCategory = () => {
+    setEditingCat(null);
+    setNewCatName('');
+    setInitialAmount('');
+    setIsCatModalOpen(true);
+  };
+
+  const openEditCategory = (cat, e) => {
+    e.stopPropagation();
+    setEditingCat(cat);
+    setNewCatName(cat.name);
+    setIsCatModalOpen(true);
+  };
   
   // User explicitly wants to add an initial logic mapping expense/income automatically
   const [initialAmount, setInitialAmount] = useState('');
@@ -57,15 +72,25 @@ export const Categories = () => {
   const handleAddNewCategory = (e) => {
     e.preventDefault();
     if(newCatName) {
-      addCategory({ name: newCatName, type: activeTab });
+      const existingCategory = categories.find(
+        c => c.type === activeTab && c.name.toLowerCase() === newCatName.toLowerCase()
+      );
+      
+      const targetCategoryName = existingCategory ? existingCategory.name : newCatName;
+
+      if (editingCat) {
+        editCategory({ ...editingCat, name: targetCategoryName });
+      } else if (!existingCategory) {
+        addCategory({ name: targetCategoryName, type: activeTab });
+      }
       
       // Auto hook an initial transaction if they provided a numeric baseline as requested
-      if (initialAmount && Number(initialAmount) > 0) {
+      if (!editingCat && initialAmount && Number(initialAmount) > 0) {
          addTransaction({
             type: activeTab,
             amount: parseFloat(initialAmount),
             date: initialDate,
-            category: newCatName,
+            category: targetCategoryName,
             account: initialAccount
          });
       }
@@ -165,7 +190,7 @@ export const Categories = () => {
 
         {isAdmin && (
            <button 
-             onClick={() => setIsCatModalOpen(true)}
+             onClick={openAddCategory}
              className="bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition-colors"
            >
              Add Category
@@ -182,11 +207,21 @@ export const Categories = () => {
 
           return (
           <div 
-            key={cat.name} 
+            key={cat.id || cat.name} 
             onClick={() => setDrillDownCategory(cat.name)}
-            className={`p-4 rounded-xl border-2 bg-white dark:bg-slate-900 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center text-center ${bColor}`}
+            className={`p-4 rounded-xl border-2 bg-white dark:bg-slate-900 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center text-center relative ${bColor}`}
           >
-            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl mb-3 border border-slate-100 dark:border-slate-700 mt-2">
+            {isAdmin && (
+              <div className="absolute top-2 right-2 flex gap-1 z-10">
+                <button onClick={(e) => openEditCategory(cat, e)} className="p-1.5 text-slate-400 hover:text-blue-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                  <Edit2 className="h-4 w-4" />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); deleteCategory(cat.id); }} className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl mb-3 border border-slate-100 dark:border-slate-700 mt-4">
                <IconComponent className="h-6 w-6 text-slate-700 dark:text-slate-300" />
             </div>
             
@@ -210,7 +245,7 @@ export const Categories = () => {
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden p-6">
               <div className="flex justify-between items-center mb-6">
-                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">Create Category</h2>
+                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">{editingCat ? 'Edit Category' : 'Create Category'}</h2>
                  <button onClick={() => setIsCatModalOpen(false)} className="text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 p-1 rounded-full"><X className="h-5 w-5"/></button>
               </div>
               <form onSubmit={handleAddNewCategory} className="space-y-4">
@@ -226,43 +261,48 @@ export const Categories = () => {
                    />
                  </div>
                  
-                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                   <p className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">Initial Log (Optional)</p>
-                   <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Amount (₹)</label>
-                        <input 
-                          type="number" 
-                          value={initialAmount} 
-                          onChange={e => setInitialAmount(e.target.value)} 
-                          className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg outline-none text-sm"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Date</label>
-                           <input 
-                             type="date"
-                             value={initialDate}
-                             onChange={e => setInitialDate(e.target.value)}
-                             className="w-full px-2 py-2 border border-slate-200 dark:border-slate-700 rounded-lg outline-none text-xs"
-                           />
+                 {/* Hide initial log inputs if we are editing an existing category */}
+                 {!editingCat && (
+                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                     <p className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">Initial Log (Optional)</p>
+                     <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Amount (₹)</label>
+                          <input 
+                            type="number" 
+                            value={initialAmount} 
+                            onChange={e => setInitialAmount(e.target.value)} 
+                            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg outline-none text-sm"
+                          />
                         </div>
-                        <div className="flex-1">
-                           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Bank</label>
-                           <select 
-                             value={initialAccount}
-                             onChange={e => setInitialAccount(e.target.value)}
-                             className="w-full px-2 py-2 border border-slate-200 dark:border-slate-700 rounded-lg outline-none text-xs"
-                           >
-                             {accounts.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
-                           </select>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Date</label>
+                             <input 
+                               type="date"
+                               value={initialDate}
+                               onChange={e => setInitialDate(e.target.value)}
+                               className="w-full px-2 py-2 border border-slate-200 dark:border-slate-700 rounded-lg outline-none text-xs"
+                             />
+                          </div>
+                          <div className="flex-1">
+                             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Bank</label>
+                             <select 
+                               value={initialAccount}
+                               onChange={e => setInitialAccount(e.target.value)}
+                               className="w-full px-2 py-2 border border-slate-200 dark:border-slate-700 rounded-lg outline-none text-xs"
+                             >
+                               {accounts.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
+                             </select>
+                          </div>
                         </div>
-                      </div>
+                     </div>
                    </div>
-                 </div>
+                 )}
 
-                 <button type="submit" className="w-full mt-6 bg-[#3b82f6] text-white font-bold py-3 rounded-xl transition-colors hover:bg-blue-600 shadow-sm">Save Category</button>
+                 <button type="submit" className="w-full mt-6 bg-[#3b82f6] text-white font-bold py-3 rounded-xl transition-colors hover:bg-blue-600 shadow-sm">
+                    {editingCat ? 'Save Changes' : 'Save Category'}
+                 </button>
               </form>
            </div>
         </div>

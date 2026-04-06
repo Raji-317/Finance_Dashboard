@@ -22,6 +22,7 @@ export const Transactions = () => {
 
   const filteredAndSorted = transactions
     .filter(t => !t.isVirtual)
+    .filter(t => t.category !== 'Uncategorized')
     .filter(t => filterType === 'all' || t.type === filterType)
     .filter(t => (t.category || '').toLowerCase().includes(searchTerm.toLowerCase()) || (t.note || '').toLowerCase().includes(searchTerm.toLowerCase()))
     .filter(t => {
